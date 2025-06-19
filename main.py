@@ -8,8 +8,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTyp
 import dotenv
 dotenv.load_dotenv()
 
-BOT_TOKEN = os.getenv("8151783107:AAG_43d57lT33n8RYAnRppA0yejg9H4a7U8
-")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
