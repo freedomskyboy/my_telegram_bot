@@ -1,17 +1,16 @@
 import logging
 import os
 from datetime import datetime
-
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-import dotenv
-dotenv.load_dotenv()
+from dotenv import load_dotenv
+load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
@@ -49,6 +48,6 @@ async def main():
     print("Бот ажиллаж байна...")
     await app.run_polling()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import asyncio
     asyncio.run(main())
