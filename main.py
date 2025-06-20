@@ -115,7 +115,7 @@ def stats(update: Update, context: CallbackContext):
     df = pd.read_csv(file_path)
     text_count = (df['message_type'] == 'text').sum()
     photo_count = (df['message_type'] == 'photo').sum()
-    update.message.reply_text(f"📊 Таны мессеж:
+    update.message.reply_text(f"📊 Таны мессеж:\n📝 Text: {text_count}\n📷 Photo: {photo_count}")
 📝 Text: {text_count}
 📷 Photo: {photo_count}")
 
