@@ -117,26 +117,27 @@ def stats(update: Update, context: CallbackContext):
     photo_count = (df['message_type'] == 'photo').sum()
 
     update.message.reply_text(
-        f"Your messages:
-Text: {text_count}
-Photo: {photo_count}"
+        f"Your messages:\nText: {text_count}\nPhoto: {photo_count}"
     )
 
-def stats(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
-    file_path = get_user_file(user_id)
-    if not os.path.exists(file_path):
-        update.message.reply_text("No data found.")
-        return
+def filter_data(update: Update, context: CallbackContext):
+    try:
+        user_id = update.message.from_user.id
+        file_path = get_user_file(user_id)
+        if not os.path.exists(file_path):
+            update.message.reply_text("No data found.")
+            return
 
-    df = pd.read_csv(file_path)
-    text_count = (df['message_type'] == 'text').sum()
-    photo_count = (df['message_type'] == 'photo').sum()
-    
-    update.message.reply_text(
-        f"\U0001F4CA Таны мессеж:\n\U0001F4DD Text: {text_count}\n\U0001F4F7 Photo: {photo_count}"
-    )
+        start_date = datetime.strptime(context.args[0], "%Y-%m-%d")
+        end_date = datetime.strptime(context.args[1], "%Y-%m-%d")
 
+        df = pd.read_csv(file_path)
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        filtered = df[(df['timestamp'] >= start_date) & (df['timestamp'] <= end_date)]
+
+        if filtered.empty:
+            update.message.reply_text("No data found in this date range.")
+            return
 
         export_file = os.path.join(EXPORTS_DIR, f"filter_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
         filtered.to_excel(export_file, index=False)
