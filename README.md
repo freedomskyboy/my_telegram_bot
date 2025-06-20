@@ -1,3 +1,3 @@
-# Telegram Work Tracking Bot (Docker-based)
+# Telegram Bot with Dashboard and Excel Export
 
-This version uses Docker to enforce Python 3.10 on Render.com.
+Visit /dashboard and export data.
