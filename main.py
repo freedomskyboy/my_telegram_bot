@@ -5,10 +5,11 @@ from datetime import datetime
 from flask import Flask
 from threading import Thread
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 # ------------------------- Config -------------------------
-ADMIN_IDS = [123456789]  # Replace with your own Telegram user ID
+ADMIN_IDS = [7956726015]  # Replace with your own Telegram user ID
 DATA_DIR = 'data'
 MEDIA_DIR = 'media'
 EXPORTS_DIR = 'exports'
@@ -177,6 +178,64 @@ def delete_all(update: Update, context: CallbackContext):
             os.remove(os.path.join(folder, f))
     update.message.reply_text("All data deleted.")
 
+def today(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    file_path = get_user_file(user_id)
+    if not os.path.exists(file_path):
+        update.message.reply_text("Өгөгдөл олдсонгүй.")
+        return
+
+    df = pd.read_csv(file_path)
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    today_date = datetime.now().date()
+    today_data = df[df['timestamp'].dt.date == today_date]
+
+    if today_data.empty:
+        update.message.reply_text("Та өнөөдөр ажил бүртгээгүй байна.")
+        return
+
+    messages = []
+    for _, row in today_data.iterrows():
+        time_str = row['timestamp'].split('T')[1][:5]  # HH:MM
+        content = row['content'] or '---'
+        msg_type = 'Зураг' if row['message_type'] == 'photo' else 'Текст'
+        messages.append(f"[{time_str}] ({msg_type}) {content}")
+
+    full_text = "\n".join(messages)
+    update.message.reply_text(f"\u2705 <b>Өнөөдрийн ажлууд:</b>\n{full_text}", parse_mode=ParseMode.HTML)
+
+def report(update: Update, context: CallbackContext):
+    admin_id = update.message.from_user.id
+    if not is_admin(admin_id):
+        update.message.reply_text("Зөвхөн админ хандах боломжтой.")
+        return
+
+    today_date = datetime.now().date()
+    skipped_users = []
+
+    for fname in os.listdir(DATA_DIR):
+        if not fname.startswith("user_") or not fname.endswith(".csv"):
+            continue
+
+        filepath = os.path.join(DATA_DIR, fname)
+        df = pd.read_csv(filepath)
+        if 'timestamp' not in df.columns:
+            continue
+
+        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+        today_data = df[df['timestamp'].dt.date == today_date]
+
+        if today_data.empty:
+            user_id = int(fname.split('_')[1].split('.')[0])
+            username = df['username'].iloc[0] if 'username' in df.columns else 'N/A'
+            skipped_users.append(f"- {username} (ID: {user_id})")
+
+    if not skipped_users:
+        update.message.reply_text("\u2705 Бүх хэрэглэгч өнөөдөр ажил бүртгэсэн байна.")
+    else:
+        msg = "\u274C Өнөөдөр ажил бүртгээгүй хэрэглэгчид:\n" + "\n".join(skipped_users)
+        update.message.reply_text(msg)
+
 # ------------------------- Main -------------------------
 def main():
     TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -193,6 +252,8 @@ def main():
     dp.add_handler(CommandHandler("filter", filter_data))
     dp.add_handler(CommandHandler("export", export_all))
     dp.add_handler(CommandHandler("delete_all", delete_all))
+    dp.add_handler(CommandHandler("today", today))
+    dp.add_handler(CommandHandler("report", report))
 
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
     dp.add_handler(MessageHandler(Filters.photo, handle_photo))
