@@ -8,7 +8,7 @@ from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 # ------------------------- Config -------------------------
-ADMIN_IDS = [123456789]  # Replace with your own Telegram user ID
+ADMIN_IDS = [7956726015]  # Replace with your own Telegram user ID
 DATA_DIR = 'data'
 MEDIA_DIR = 'media'
 EXPORTS_DIR = 'exports'
