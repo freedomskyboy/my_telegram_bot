@@ -1,3 +1,3 @@
-# Telegram Work Tracking Bot
+# Telegram Work Tracking Bot (Docker-based)
 
-Fixed version with correct f-string formatting.
+This version uses Docker to enforce Python 3.10 on Render.com.
