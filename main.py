@@ -25,7 +25,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "📅 Telegram Work Tracking Bot is running!"
+    return "Telegram Work Tracking Bot is running!"
 
 def run_flask():
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
@@ -47,10 +47,10 @@ def save_to_csv(user_id: int, row: dict):
 
 # ------------------------- Handlers -------------------------
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text('🤖 Work Tracking Bot activated! Send your work updates here.')
+    update.message.reply_text('Work Tracking Bot activated! Send your work updates here.')
 
 def get_id(update: Update, context: CallbackContext):
-    update.message.reply_text(f"🔑 Таны Telegram ID: {update.message.from_user.id}")
+    update.message.reply_text(f"Your Telegram ID: {update.message.from_user.id}")
 
 def handle_message(update: Update, context: CallbackContext):
     user = update.message.from_user
@@ -67,7 +67,7 @@ def handle_message(update: Update, context: CallbackContext):
         'media_path': None
     }
     save_to_csv(user.id, entry)
-    update.message.reply_text('📄 Message logged successfully!')
+    update.message.reply_text('Message logged successfully!')
 
 def handle_photo(update: Update, context: CallbackContext):
     user = update.message.from_user
@@ -89,13 +89,13 @@ def handle_photo(update: Update, context: CallbackContext):
         'media_path': filepath
     }
     save_to_csv(user.id, entry)
-    update.message.reply_text('📸 Photo logged successfully!')
+    update.message.reply_text('Photo logged successfully!')
 
 def mydata(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     file_path = get_user_file(user_id)
     if not os.path.exists(file_path):
-        update.message.reply_text("❌ Таны өгөгдөл байхгүй байна.")
+        update.message.reply_text("No data found.")
         return
 
     df = pd.read_csv(file_path)
@@ -103,28 +103,31 @@ def mydata(update: Update, context: CallbackContext):
     df.to_excel(export_file, index=False)
 
     with open(export_file, 'rb') as file:
-        context.bot.send_document(chat_id=update.effective_chat.id, document=file, caption="📃 Таны өгөгдөл")
+        context.bot.send_document(chat_id=update.effective_chat.id, document=file, caption="Your data")
 
 def stats(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     file_path = get_user_file(user_id)
     if not os.path.exists(file_path):
-        update.message.reply_text("📊 Өгөгдөл байхгүй байна.")
+        update.message.reply_text("No data found.")
         return
 
     df = pd.read_csv(file_path)
     text_count = (df['message_type'] == 'text').sum()
     photo_count = (df['message_type'] == 'photo').sum()
-    update.message.reply_text(f"📊 Таны мессеж:\n📝 Text: {text_count}\n📷 Photo: {photo_count}")
-📝 Text: {text_count}
-📷 Photo: {photo_count}")
+
+    update.message.reply_text(
+        f"Your messages:
+Text: {text_count}
+Photo: {photo_count}"
+    )
 
 def filter_data(update: Update, context: CallbackContext):
     try:
         user_id = update.message.from_user.id
         file_path = get_user_file(user_id)
         if not os.path.exists(file_path):
-            update.message.reply_text("❌ Таны өгөгдөл байхгүй байна.")
+            update.message.reply_text("No data found.")
             return
 
         start_date = datetime.strptime(context.args[0], "%Y-%m-%d")
@@ -135,27 +138,27 @@ def filter_data(update: Update, context: CallbackContext):
         filtered = df[(df['timestamp'] >= start_date) & (df['timestamp'] <= end_date)]
 
         if filtered.empty:
-            update.message.reply_text("📅 Энэ хугацаанд өгөгдөл байхгүй.")
+            update.message.reply_text("No data found in this date range.")
             return
 
         export_file = os.path.join(EXPORTS_DIR, f"filter_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
         filtered.to_excel(export_file, index=False)
 
         with open(export_file, 'rb') as file:
-            context.bot.send_document(chat_id=update.effective_chat.id, document=file, caption="📋 Шүүлттэй өгөгдөл")
+            context.bot.send_document(chat_id=update.effective_chat.id, document=file, caption="Filtered data")
     except:
-        update.message.reply_text("⚠️ Зөв format: /filter YYYY-MM-DD YYYY-MM-DD")
+        update.message.reply_text("Usage: /filter YYYY-MM-DD YYYY-MM-DD")
 
 def export_all(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     if not is_admin(user_id):
-        update.message.reply_text("⛔️ Та админ биш байна.")
+        update.message.reply_text("Access denied. Admins only.")
         return
 
     all_files = [f for f in os.listdir(DATA_DIR) if f.startswith("user_")]
     all_dfs = [pd.read_csv(os.path.join(DATA_DIR, f)) for f in all_files if os.path.exists(os.path.join(DATA_DIR, f))]
     if not all_dfs:
-        update.message.reply_text("📂 Өгөгдөл олдсонгүй.")
+        update.message.reply_text("No data found.")
         return
 
     df = pd.concat(all_dfs, ignore_index=True)
@@ -163,24 +166,24 @@ def export_all(update: Update, context: CallbackContext):
     df.to_excel(export_file, index=False)
 
     with open(export_file, 'rb') as file:
-        context.bot.send_document(chat_id=update.effective_chat.id, document=file, caption="📁 Бүх хэрэглэгчийн өгөгдөл")
+        context.bot.send_document(chat_id=update.effective_chat.id, document=file, caption="All user data")
 
 def delete_all(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     if not is_admin(user_id):
-        update.message.reply_text("❌ Админ л устгах эрхтэй!")
+        update.message.reply_text("Access denied.")
         return
 
     for folder in [DATA_DIR, EXPORTS_DIR]:
         for f in os.listdir(folder):
             os.remove(os.path.join(folder, f))
-    update.message.reply_text("🗑️ Бүх өгөгдөл устгагдлаа.")
+    update.message.reply_text("All data deleted.")
 
 # ------------------------- Main -------------------------
 def main():
     TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
     if not TOKEN:
-        raise ValueError("❌ TELEGRAM_BOT_TOKEN is not set")
+        raise ValueError("TELEGRAM_BOT_TOKEN is not set")
 
     updater = Updater(TOKEN)
     dp = updater.dispatcher
